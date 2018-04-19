@@ -18,20 +18,23 @@ tree_type   snapshot    http://distfiles.gentoo.org/snapshots/portage-latest.tar
 
 # get kernel dotconfig from the official running kernel
 cat /proc/config.gz | gzip -d > /dotconfig
-grep -v CONFIG_EXTRA_FIRMWARE /dotconfig > /dotconfig2 ; mv /dotconfig2 /dotconfig
 grep -v LZO                   /dotconfig > /dotconfig2 ; mv /dotconfig2 /dotconfig
+#grep -v CONFIG_EXTRA_FIRMWARE /dotconfig > /dotconfig2 ; mv /dotconfig2 /dotconfig
+sed -i '/CONFIG_EXTRA_FIRMWARE/d' /dotconfig
+sed -i '/CONFIG_INITRAMFS_SOURCE/d' /dotconfig
 kernel_config_file       /dotconfig
 kernel_sources	         gentoo-sources
 initramfs_builder               
 genkernel_kernel_opts    --loglevel=5
 genkernel_initramfs_opts --loglevel=5
 
-timezone                UTC
-rootpw                  a
+timezone                Europe/Berlin
+rootpw                  asdf1234
 bootloader              grub
 keymap	                us # be-latin1 fr
-hostname                gentoo
+hostname                gentoobox
 extra_packages          dhcpcd # syslog-ng vim openssh
+grub2_install           /dev/sda
 
 #rcadd                   sshd       default
 #rcadd                   syslog-ng  default

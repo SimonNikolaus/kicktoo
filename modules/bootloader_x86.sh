@@ -64,10 +64,10 @@ configure_bootloader_grub2() {
     
         if [ -n "${key}" ] && [ -n "${value}" ]; then 
             debug configure_bootloader_grub2 "deploying grub2-install $key=$value /dev/${device}"
-            spawn_chroot "grub2-install ${key}=${value} /dev/${device}" || die "Could not deploy grub2-install $key=$value /dev/${device}"
+            spawn_chroot "grub-install ${key}=${value} /dev/${device}" || die "Could not deploy grub2-install $key=$value /dev/${device}"
         else
             debug configure_bootloader_grub2 "deploying grub2-install /dev/${device}"
-            spawn_chroot "grub2-install /dev/${device}" || die "Could not deploy grub2-install /dev/${device}"
+            spawn_chroot "grub-install /dev/${device}" || die "Could not deploy grub2-install /dev/${device}"
         fi
         #spawn_chroot "grub2-install --modules=\"part_gpt mdraid1x lvm xfs\" /dev/sda" || die "Could not deploy with grub2-install on /dev/sda"
         #spawn_chroot "grub2-install --modules=\"part_gpt mdraid1x lvm xfs\" /dev/sdb" || die "Could not deploy with grub2-install on /dev/sdb"
@@ -83,51 +83,8 @@ configure_bootloader_grub2() {
 	spawn "echo -e '\n\nGRUB_CMDLINE_LINUX=\"\$GRUB_CMDLINE_LINUX ${args}\"' >> ${chroot_dir}/etc/default/grub" || die "Could not add dolvm option to ${chroot_dir}/etc/default/grub"
     fi
     debug configure_grub2 "generating /boot/grub/grub.cfg"
-    spawn_chroot "grub2-mkconfig -o /boot/grub/grub.cfg" || die "Could not generate /boot/grub2/grub.cfg"
+    spawn_chroot "grub-mkconfig -o /boot/grub/grub.cfg" || die "Could not generate /boot/grub/grub.cfg"
 }
-
-# made for funtoo, broken for gentoo
-#configure_bootloader_grub2() {
-#    debug configure_bootloader_grub2 "configuring /boot/grub2/grub.cfg"
-#    check_chroot_fstab /boot && spawn_chroot "[ -z \"\$(mount | grep /boot)\" ] && mount /boot"            
-#    [ -d "${chroot_dir}/boot/grub2" ] || spawn_chroot "mkdir /boot/grub2"
-#    echo -e "set default=0\nset timeout=5\n" > ${chroot_dir}/boot/grub2/grub.cfg
-#    local boot_root="$(get_boot_and_root)"
-#    local boot="$(echo ${boot_root} | cut -d '|' -f1)"
-#    local boot_device="$(get_device_and_partition_from_devnode ${boot} | cut -d '|' -f1)"
-#    local boot_minor="$(get_device_and_partition_from_devnode ${boot} | cut -d '|' -f2)"
-#    local root="$(echo ${boot_root} | cut -d '|' -f2)"
-#    local kernel_initrd="$(get_kernel_and_initrd)"
-#
-#    for k in ${kernel_initrd}; do
-#        local kernel="$(echo ${k}  | cut -d '|' -f1)"
-#        local initrd="$(echo ${k}  | cut -d '|' -f2)"
-#        local kv="$(echo ${kernel} | sed -e 's:^kernel-*-[^-]\+-::' | sed -e 's:[^-]\+-::')"
-#        echo "menuentry \"${distro} Linux ${kv}\" {" >> ${chroot_dir}/boot/grub2/grub.cfg
-#        local grub_device="$(map_device_to_grub2_device ${boot_device})" # FIXME map_device_ does not work anymore since grub:2 on gentoo
-#        if [ -z "${grub_device}" ]; then
-#            error "Could not map boot device ${boot_device} to grub device"
-#            return 1
-#        fi
-#        echo -en "set root=(${grub_device},$(expr ${boot_minor}))\nlinux /${kernel} " >> ${chroot_dir}/boot/grub2/grub.cfg
-#        if [ -z "${initrd}" ]; then
-#            echo "root=${root}" >> ${chroot_dir}/boot/grub2/grub.cfg
-#        else
-#            echo "root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root=${root} ${bootloader_kernel_args}" >> ${chroot_dir}/boot/grub2/grub.cfg
-#            echo -e "initrd /${initrd}\n" >> ${chroot_dir}/boot/grub2/grub.cfg
-#        fi
-#        echo -e "}\n" >> ${chroot_dir}/boot/grub2/grub.cfg
-#    done
-#    if ! spawn_chroot "grep -v rootfs /proc/mounts > /etc/mtab"; then
-#        error "Could not copy /proc/mounts to /etc/mtab"
-#        return 1
-#    fi
-#    [ -z "${bootloader_install_device}" ] && bootloader_install_device="$(get_device_and_partition_from_devnode ${boot} | cut -d '|' -f1)"
-#    if ! spawn_chroot "grub2-install ${bootloader_install_device}"; then
-#        error "Could not install grub to ${bootloader_install_device}"
-#        return 1
-#    fi
-#}
 
 configure_bootloader_lilo() {
     debug configure_bootloader_lilo "configuring /etc/lilo.conf"
